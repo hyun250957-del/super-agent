@@ -2,7 +2,7 @@ langchain==0.3.25
 langchain-groq==0.3.2
 langchain-community==0.3.24
 langchain-core==0.3.59
-duckduckgo-search
+ddgs
 requests
 beautifulsoup4
 python-dotenv
@@ -12,3 +12,7 @@ plotly
 openpyxl
 PyPDF2
 openai
+streamlit-authenticator==0.4.2
+youtube-transcript-api==1.2.4
+bcrypt
+pyyaml
