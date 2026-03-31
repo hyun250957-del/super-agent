@@ -1,0 +1,28 @@
+cookie:
+  expiry_days: 0
+  key: super_agent_secret_key_2026
+  name: super_agent_cookie
+credentials:
+  usernames:
+    friend1:
+      email: friend1@example.com
+      first_name: 친구
+      last_name: 일
+      password: $2b$12$QWEoXwMLuEd2RK1CyrsYeeUElCIdDjNTJTznTaCHaGSZJ2uw1aT2a
+      roles:
+      - user
+    jahyun:
+      email: jahyun@example.com
+      first_name: 자현
+      last_name: 김
+      password: $2b$12$umPQHpQkTVRvXV.FfPB/Mu3BlvsJEFBeUoM65TUGGVRxlVq.DT6s2
+      roles:
+      - admin
+    wkgus:
+      email: hyun250957@gmail.com
+      first_name: kim
+      last_name: jahyun
+      logged_in: false
+      password: $2b$12$jCgm/XL3/AER64dacU3n8OaVira4oYNyuOaQGwgENouayfRiAIrjO
+      password_hint: '1234'
+      roles: null
