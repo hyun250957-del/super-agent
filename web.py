@@ -540,7 +540,7 @@ def execute_tool(tool_name, tool_input):
 # LLM & 에이전트
 # ──────────────────────────────────────────
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="meta-llama/llama-4-scout-17b-16e-instruct",
     temperature=0.3,
     groq_api_key=os.getenv("GROQ_API_KEY")
 )
@@ -581,18 +581,26 @@ def run_agent(user_input, chat_history):
 
 [답변 규칙]
 - 항상 존댓말 사용
-- 핵심만 간결하게 답변
-- 이전 대화 번호 나열 금지
+- 핵심만 간결하게 바로 답변 (질문 되묻기 금지!)
+- 사용자가 뭔가 요청하면 즉시 실행 (확인 질문 금지)
+- 번호 목록, 불필요한 설명 금지
 - 한국어만 사용 (영어 고유명사 제외)
 - 한자 절대 금지 (進行, 開始 같은 한자 사용 금지)
 - 중국어, 일본어 절대 금지
+- "무엇을 도와드릴까요?" 같은 말 금지
+- "인베스팅닷컴, 코인마켓캡, CoinGecko에서 확인하세요" 같은 외부 링크 안내 금지
+- 검색 결과에서 찾은 숫자/데이터를 직접 답변에 포함할 것
+- 뉴스 요청 시 즉시 web_search 실행
 
-[도구 사용 규칙]
-1. 실시간 정보(시세, 날씨, 뉴스)는 반드시 web_search 사용
-2. 코드 실행은 run_code 사용
-3. 일정은 get_schedule/add_schedule/delete_schedule 사용
-4. 유튜브 URL은 youtube_summary 사용
-5. 보고서는 write_report 사용
+[도구 사용 규칙 - 반드시 지킬 것]
+1. 뉴스, 날씨, 시세, 검색 요청 → 무조건 web_search 먼저 실행
+2. 코드 실행 → run_code 사용
+3. 일정 조회/추가/삭제 → get_schedule/add_schedule/delete_schedule 사용
+4. 유튜브 URL → youtube_summary 사용
+5. 보고서 작성 → write_report 사용
+6. 절대 금지: 도구 없이 뉴스/날씨/시세를 직접 답변하는 것
+7. 절대 금지: 모른다고 하거나 웹사이트 방문 안내하는 것
+8. "뉴스", "날씨", "비트코인", "주식" 단어가 나오면 즉시 web_search 실행
 
 [도구 호출 형식]
 TOOL: 도구이름
@@ -621,7 +629,32 @@ INPUT: YYYY-MM-DD|제목|시간메모
 현재 시각: {get_date()}
 {history_text}{file_text}"""
 
-    messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_input)]
+    # 실시간 정보 키워드 감지 → 도구 강제 실행
+    realtime_keywords = ['뉴스', '날씨', '비트코인', '주식', '시세', '환율', '코인', '검색해', '찾아줘', '알려줘', '오늘', '현재', '지금', '최신', '삼성', '애플', '테슬라']
+    force_search = any(k in user_input for k in realtime_keywords)
+
+    # 시세 전용 검색어 보강
+    if '비트코인' in user_input or 'btc' in user_input.lower():
+        search_query = '비트코인 BTC 원화 KRW 현재가 오늘 시세'
+    elif '이더리움' in user_input or 'eth' in user_input.lower():
+        search_query = '이더리움 ETH 원화 KRW 현재가 오늘 시세'
+    elif '리플' in user_input or 'xrp' in user_input.lower():
+        search_query = '리플 XRP 원화 KRW 현재가 오늘 시세'
+    elif '코인 시세' in user_input or '암호화폐' in user_input or ('코인' in user_input and '시세' in user_input):
+        search_query = '비트코인 BTC 오늘 시세 원화 KRW 이더리움 ETH 리플 XRP 현재가'
+    elif any(k in user_input for k in ['시세', '주식', '환율', '삼성전자', '테슬라', '나스닥', '코스피']):
+        search_query = user_input + ' 오늘 현재 가격 시세'
+    else:
+        search_query = user_input + ' 최신 한국'
+
+    if force_search:
+        search_result = web_search(search_query)
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=f"사용자 질문: {user_input}\n\n[검색 결과]\n{search_result}\n\n위 검색 결과를 바탕으로 핵심만 간결하게 답변해줘.")
+        ]
+    else:
+        messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_input)]
     reply = llm.invoke(messages).content
 
     tool_names = list(TOOLS.keys())
