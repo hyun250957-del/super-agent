@@ -811,41 +811,42 @@ user_input = st.chat_input("자비스에게 말하세요... 💬")
 if user_input:
     process_input(user_input)
 
-# 음성 버튼 (채팅창 바로 위, 오른쪽 정렬)
+# 음성 버튼 - 채팅창 바로 위 오른쪽
 if VOICE_AVAILABLE:
     st.markdown("""
     <style>
-    .voice-row {
-        position: fixed;
-        bottom: 70px;
-        right: 28px;
-        z-index: 99999;
+    .voice-btn-wrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 4px;
+        margin-right: 4px;
     }
-    .voice-row button {
-        width: 40px !important;
-        height: 40px !important;
+    .voice-btn-wrap button {
+        width: 42px !important;
+        height: 42px !important;
         border-radius: 50% !important;
         background: linear-gradient(135deg, #b71c1c, #0d47a1) !important;
-        border: 1px solid #ef5350 !important;
+        border: 2px solid #ef5350 !important;
         font-size: 18px !important;
         padding: 0 !important;
-        line-height: 1 !important;
         box-shadow: 0 0 10px rgba(239,83,80,0.5) !important;
+        transition: all 0.2s ease !important;
+        min-width: unset !important;
     }
-    .voice-row button:hover {
+    .voice-btn-wrap button:hover {
         box-shadow: 0 0 20px rgba(239,83,80,0.9) !important;
-        transform: scale(1.1) !important;
+        transform: scale(1.12) !important;
     }
     </style>
     """, unsafe_allow_html=True)
-    with st.container():
-        st.markdown('<div class="voice-row">', unsafe_allow_html=True)
-        if st.button("🎙️", key="voice_fixed", help="음성 입력"):
-            with st.spinner("🎙️ 듣는 중..."):
-                voice_text = listen()
-            if voice_text:
-                st.toast(f"✅ {voice_text}")
-                process_input(voice_text)
-            else:
-                st.toast("❌ 다시 시도해주세요!")
-        st.markdown('</div>', unsafe_allow_html=True)
+    col1, col2 = st.columns([10, 1])
+    with col2:
+        voice_click = st.button("🎙️", key="voice_fixed", help="음성 입력")
+    if voice_click:
+        with st.spinner("🎙️ 듣는 중..."):
+            voice_text = listen()
+        if voice_text:
+            st.toast(f"✅ {voice_text}")
+            process_input(voice_text)
+        else:
+            st.toast("❌ 다시 시도해주세요!")
